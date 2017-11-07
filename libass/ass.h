@@ -303,6 +303,12 @@ void ass_set_frame_size(ASS_Renderer *priv, int w, int h);
 void ass_set_storage_size(ASS_Renderer *priv, int w, int h);
 
 /**
+* \brief Set font ligatures (only for harfbuzz).
+* \param ligatures 0=default 1=override (disabled)
+*/
+void ass_set_font_ligatures(ASS_Renderer *priv, int ligatures);
+
+/**
  * \brief Set shaping level. This is merely a hint, the renderer will use
  * whatever is available if the request cannot be fulfilled.
  * \param level shaping level

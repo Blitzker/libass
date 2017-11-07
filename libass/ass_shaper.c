@@ -56,6 +56,8 @@ struct ass_shaper {
     hb_feature_t *features;
     hb_language_t language;
 
+    int ligatures;
+
     // Glyph metrics cache, to speed up shaping
     Cache *metrics_cache;
 #endif
@@ -179,11 +181,15 @@ static void set_run_features(ASS_Shaper *shaper, GlyphInfo *info)
     else
         shaper->features[VERT].value = shaper->features[VKNA].value = 0;
 
-    // disable ligatures if horizontal spacing is non-standard
-    if (info->hspacing)
+    if (shaper->ligatures == 0) {
+        // disable ligatures if horizontal spacing is non-standard
+        if (info->hspacing)
+            shaper->features[LIGA].value = shaper->features[CLIG].value = 0;
+        else
+            shaper->features[LIGA].value = shaper->features[CLIG].value = 1;
+    } else {
         shaper->features[LIGA].value = shaper->features[CLIG].value = 0;
-    else
-        shaper->features[LIGA].value = shaper->features[CLIG].value = 1;
+    }
 }
 
 /**
@@ -724,6 +730,18 @@ void ass_shaper_set_kerning(ASS_Shaper *shaper, int kern)
 {
 #ifdef CONFIG_HARFBUZZ
     shaper->features[KERN].value = !!kern;
+#endif
+}
+
+/**
+* \brief Set font ligatures for HarfBuzz shaping.
+* \param render_priv renderer instance
+* \param ligatures set font ligatures 0=default, 1=override (disabled)
+*/
+void ass_set_font_ligatures(ASS_Renderer *render_priv, int ligatures)
+{
+#ifdef CONFIG_HARFBUZZ
+    render_priv->shaper->ligatures = ligatures;
 #endif
 }
 
