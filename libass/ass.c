@@ -32,6 +32,10 @@
 #include <iconv.h>
 #endif
 
+#ifdef CONFIG_WINUTF16
+#include <windows.h>
+#endif
+
 #include "ass.h"
 #include "ass_utils.h"
 #include "ass_library.h"
@@ -1059,12 +1063,26 @@ char *read_file(ASS_Library *library, char *fname, size_t *bufsize)
     long bytes_read;
     char *buf;
 
+// On windows, file names with unicode chars need to be opened
+// using UTF-16 (wide chars) functions.
+#ifdef CONFIG_WINUTF16
+    FILE *fp;
+    wchar_t wfname[4096];
+    MultiByteToWideChar(CP_UTF8, 0, fname, -1, wfname, 4096);
+    res = _wfopen_s(&fp, wfname, L"rb");
+    if (res != 0) {
+        ass_msg(library, MSGL_WARN,
+            "ass_read_file(%s): fopen failed", fname);
+        return 0;
+    }
+#else
     FILE *fp = fopen(fname, "rb");
     if (!fp) {
         ass_msg(library, MSGL_WARN,
                 "ass_read_file(%s): fopen failed", fname);
         return 0;
     }
+#endif
     res = fseek(fp, 0, SEEK_END);
     if (res == -1) {
         ass_msg(library, MSGL_WARN,
